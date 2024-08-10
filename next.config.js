@@ -1,14 +1,10 @@
-/** @type {import('next').NextConfig} */
-
 const withImages = require('next-images')
 
 const createNextIntlPlugin = require('next-intl/plugin')
 
-const withNextIntl = createNextIntlPlugin({
-	locales: ['en', 'ko'],
-	defaultLocale: 'en',
-})
+const withNextIntl = createNextIntlPlugin()
 
+/** @type {import('next').NextConfig} */
 const nextConfig = {
 	output: 'standalone',
 	reactStrictMode: true,
@@ -16,6 +12,7 @@ const nextConfig = {
 	sassOptions: {
 		additionalData: `@use '/src/scss/abstracts/index' as *;`,
 	},
+
 	async rewrites() {
 		return [
 			{
