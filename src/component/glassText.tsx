@@ -14,11 +14,45 @@ type GlassProps = {
 
 const Text = ({ character, index }: GlassProps) => {
 	const [hovered, setHovered] = useState(false)
-	const [position, setPosition] = useState(new THREE.Vector3(index * 2 - 6, 0.5, 0))
-	const targetPosition = new THREE.Vector3(index * 2 - 6, hovered ? 1 : 0.5, 0)
+	const initialY = 10 + Math.random() * 5 // 초기 Y 위치, 글자가 떨어지기 시작하는 위치를 무작위로 설정
+	const [position, setPosition] = useState(new THREE.Vector3(index * 2 - 6, initialY, 0))
+	const targetPosition = new THREE.Vector3(index * 2 - 6, 0.1, 0)
+	const [velocity, setVelocity] = useState(0) // 속도 초기값
+	const [bouncing, setBouncing] = useState(true) // 바운스 상태 제어
+	const [bounceCount, setBounceCount] = useState(0) // 튕긴 횟수
+	const [isFalling, setIsFalling] = useState(true) // 현재 글자가 떨어지는 중인지 여부
 
 	useFrame((state, delta) => {
-		position.lerp(targetPosition, delta * 5)
+		if (bouncing) {
+			if (isFalling) {
+				// 글자가 떨어질 때
+				if (position.y > targetPosition.y) {
+					setVelocity((v) => v + delta * 9.8) // 중력 효과 추가
+					position.y -= velocity * delta
+				} else {
+					// 바닥에 도달
+					position.y = targetPosition.y
+					setIsFalling(false)
+					setVelocity(Math.abs(velocity) * 0.5) // 속도를 절반으로 줄여 튕겨오름
+				}
+			} else {
+				// 글자가 위로 튕겨오를 때
+				if (velocity > 0) {
+					position.y += velocity * delta // 위로 올라감
+					setVelocity((v) => v - delta * 9.8 * 2) // 속도 감소
+				} else {
+					// 최고점에 도달한 후 다시 떨어짐
+					setIsFalling(true)
+					setBounceCount(bounceCount + 1)
+					if (bounceCount >= 2) {
+						// 3번째 튕김 후 멈춤
+						setBouncing(false)
+						position.y = targetPosition.y // 최종 위치로 정착
+						setVelocity(0) // 속도 0으로 설정하여 위치 고정
+					}
+				}
+			}
+		}
 		setPosition(position.clone())
 	})
 
@@ -96,6 +130,7 @@ const CameraController = () => {
 
 	return null
 }
+
 const GlassText = () => {
 	const text = 'LOOGLE'
 
@@ -103,7 +138,7 @@ const GlassText = () => {
 		<div className={styles.glassText}>
 			<Canvas
 				camera={{
-					position: [0, 2, typeof window !== 'undefined' && window.innerWidth < 900 ? 30 : 20],
+					position: [0, 0, typeof window !== 'undefined' && window.innerWidth < 900 ? 30 : 20],
 					fov: 50,
 					near: 0.1,
 					far: 100,
